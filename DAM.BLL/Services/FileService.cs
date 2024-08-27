@@ -1,9 +1,14 @@
 ﻿using AutoMapper;
-using DAM.DAM.Api.DTOs.File;
-using DAM.DAM.Api.DTOs.Permission;
+using DAM.DAM.Api.DTOs.Requests.File;
+using DAM.DAM.Api.DTOs.Requests.Folder;
+using DAM.DAM.Api.DTOs.Requests.Permission;
+using DAM.DAM.Api.DTOs.Responses.File;
+using DAM.DAM.Api.DTOs.Responses.Folder;
 using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.DAL.Enums;
 using DAM.DAM.DAL.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using static DAM.DAM.BLL.Extensions.PagingExtension;
 using File = DAM.DAM.DAL.Entities.File;
 
 namespace DAM.DAM.BLL.Services
@@ -60,7 +65,7 @@ namespace DAM.DAM.BLL.Services
             return _mapper.Map<FileResponse>(existingFile);
         }
 
-        public async Task DeleteFileAsync(FileRequest request)
+        public async Task DeleteFileAsync(FolderDeleteRequest request)
         {
             var file = await _filesRepository.GetByIdAsync(request.Id)
                 ?? throw new KeyNotFoundException("File not found.");
@@ -76,6 +81,35 @@ namespace DAM.DAM.BLL.Services
             }
 
             await _filesRepository.DeleteAsync(file);
+        }
+
+        public async Task<FileResponse> GetFileByIdAsync(string id)
+        {
+            var file = await _filesRepository.GetByIdAsync(id);
+
+            if (file == null)
+            {
+                throw new KeyNotFoundException("File not found.");
+            }
+
+            return _mapper.Map<FileResponse>(file); ;
+        }
+
+        public async Task<PagedResult<FileResponse>> GetAllFilesAsync(FolderGetAllRequest request)
+        {
+            var folders = await _filesRepository.GetAllAsync(f => EF.Functions.Like(f.Name, $"%{request.SearchQuery}%"));
+
+            var pagedResult = await folders.ToPagedResult(request.PageIndex, request.PageSize);
+
+            var mappedItems = _mapper.Map<List<FileResponse>>(pagedResult.Items);
+
+            return new PagedResult<FileResponse>
+            {
+                Items = mappedItems,
+                Total = pagedResult.Total,
+                PageSize = pagedResult.PageSize,
+                Skipped = pagedResult.Skipped,
+            };
         }
     }
 }

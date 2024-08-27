@@ -1,4 +1,4 @@
-﻿using DAM.DAM.Api.DTOs.Folder;
+﻿using DAM.DAM.Api.DTOs.Requests.Folder;
 using DAM.DAM.BLL.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -1,6 +1,6 @@
-﻿using DAM.DAM.Api.DTOs.File;
+﻿using DAM.DAM.Api.DTOs.Responses.File;
 
-namespace DAM.DAM.Api.DTOs.Folder
+namespace DAM.DAM.Api.DTOs.Responses.Folder
 {
     public class FolderDetailsResponse
     {

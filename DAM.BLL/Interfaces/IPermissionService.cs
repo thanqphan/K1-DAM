@@ -1,4 +1,4 @@
-﻿using DAM.DAM.Api.DTOs.Permission;
+﻿using DAM.DAM.Api.DTOs.Requests.Permission;
 
 namespace DAM.DAM.BLL.Interfaces
 {

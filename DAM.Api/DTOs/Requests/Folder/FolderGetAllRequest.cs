@@ -1,6 +1,6 @@
-﻿namespace DAM.DAM.Api.DTOs.File
+﻿namespace DAM.DAM.Api.DTOs.Requests.Folder
 {
-    public class FileGetAllRequest
+    public class FolderGetAllRequest
     {
         public string SearchQuery { get; set; } = string.Empty;
         public int PageIndex { get; set; } = 1;

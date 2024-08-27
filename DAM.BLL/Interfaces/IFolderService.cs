@@ -1,4 +1,5 @@
-﻿using DAM.DAM.Api.DTOs.Folder;
+﻿using DAM.DAM.Api.DTOs.Requests.Folder;
+using DAM.DAM.Api.DTOs.Responses.Folder;
 using DAM.DAM.BLL.Extensions;
 using static DAM.DAM.BLL.Extensions.PagingExtension;
 

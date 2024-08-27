@@ -1,8 +1,8 @@
-﻿namespace DAM.DAM.Api.DTOs.Folder
+﻿namespace DAM.DAM.Api.DTOs.Requests.Folder
 {
     public class FolderDeleteRequest
     {
-        public string FolderId { get; set; }
+        public string Id { get; set; }
         public string UserId { get; set; }
     }
 }

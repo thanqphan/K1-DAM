@@ -1,4 +1,4 @@
-﻿namespace DAM.DAM.Api.DTOs.Folder
+﻿namespace DAM.DAM.Api.DTOs.Responses.Folder
 {
     public class FolderResponse
     {

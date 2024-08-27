@@ -1,4 +1,4 @@
-﻿using DAM.DAM.Api.DTOs.Permission;
+﻿using DAM.DAM.Api.DTOs.Requests.Permission;
 using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.DAL.Entities;
 using DAM.DAM.DAL.Enums;

@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using Azure.Core;
-using DAM.DAM.Api.DTOs.File;
-using DAM.DAM.Api.DTOs.Folder;
-using DAM.DAM.Api.DTOs.Permission;
+using DAM.DAM.Api.DTOs.Requests.Folder;
+using DAM.DAM.Api.DTOs.Requests.Permission;
+using DAM.DAM.Api.DTOs.Responses.File;
+using DAM.DAM.Api.DTOs.Responses.Folder;
 using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.DAL.Entities;
 using DAM.DAM.DAL.Enums;
@@ -70,7 +70,7 @@ namespace DAM.DAM.BLL.Services
 
         public async Task DeleteFolderAsync(FolderDeleteRequest request)
         {
-            var folder = await _foldersRepository.GetByIdAsync(request.FolderId)
+            var folder = await _foldersRepository.GetByIdAsync(request.Id)
                 ?? throw new KeyNotFoundException("Folder not found.");
 
             if (!await _permissionService.HasPermissionAsync(new PermissionRequest

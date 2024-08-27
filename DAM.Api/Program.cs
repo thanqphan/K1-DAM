@@ -1,4 +1,6 @@
+using AutoMapper;
 using DAM;
+using DAM.DAM.Api.DTOs.Profiles;
 using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.BLL.Services;
 using DAM.DAM.DAL.Contexts;
@@ -6,7 +8,6 @@ using DAM.DAM.DAL.Interfaces;
 using DAM.DAM.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +25,11 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<DAMContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-builder.Services.AddScoped(typeof(IBaseService<>), typeof(BaseService<>));
+builder.Services.AddScoped<IFolderService, FolderService>();
+builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+builder.Services.AddAutoMapper(typeof(FolderProfile), typeof(FileProfile));
 
 var app = builder.Build();
 

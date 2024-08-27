@@ -1,4 +1,4 @@
-﻿namespace DAM.DAM.Api.DTOs.File
+﻿namespace DAM.DAM.Api.DTOs.Requests.File
 {
     public class FileDeleteRequest
     {

@@ -1,4 +1,6 @@
-﻿namespace DAM.DAM.Api.DTOs.Folder
+﻿using DAM.DAM.Api.DTOs.Responses.Folder;
+
+namespace DAM.DAM.Api.DTOs.Requests.Folder
 {
     public class FolderRequest : FolderResponse
     {

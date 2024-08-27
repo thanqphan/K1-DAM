@@ -1,5 +1,7 @@
-﻿using DAM.DAM.Api.DTOs.File;
+﻿using DAM.DAM.Api.DTOs.Requests.File;
+using DAM.DAM.Api.DTOs.Requests.Folder;
 using DAM.DAM.BLL.Interfaces;
+using DAM.DAM.BLL.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,17 +11,17 @@ namespace DAM.DAM.Api.Controller
     [ApiController]
     public class FileController : ControllerBase
     {
-        private readonly IFileService _FileService;
+        private readonly IFileService _fileService;
 
         public FileController(IFileService FileService)
         {
-            _FileService = FileService;
+            _fileService = FileService;
         }
 
         [HttpPost]
         public async Task<IActionResult> AddFile([FromBody] FileRequest request)
         {
-            var response = await _FileService.AddFileAsync(request);
+            var response = await _fileService.AddFileAsync(request);
 
             return Ok(response);
         }
@@ -27,17 +29,38 @@ namespace DAM.DAM.Api.Controller
         [HttpPatch]
         public async Task<IActionResult> UpdateFile([FromBody] FileRequest request)
         {
-            var response = await _FileService.UpdateFileAsync(request);
+            var response = await _fileService.UpdateFileAsync(request);
 
             return Ok(response);
         }
 
-        [HttpDelete("{Id}")]
-        public async Task<IActionResult> DeleteFile([FromQuery] FileRequest request)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFile([FromQuery] FolderDeleteRequest request)
         {
-            await _FileService.DeleteFileAsync(request);
+            await _fileService.DeleteFileAsync(request);
 
             return NoContent();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetFileById(string id)
+        {
+            try
+            {
+                var folderDto = await _fileService.GetFileByIdAsync(id);
+                return Ok(folderDto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllFiles([FromQuery] FolderGetAllRequest request)
+        {
+            var folders = await _fileService.GetAllFilesAsync(request);
+            return Ok(folders);
         }
     }
 }

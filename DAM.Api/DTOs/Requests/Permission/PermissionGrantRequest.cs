@@ -1,6 +1,6 @@
 ﻿using DAM.DAM.DAL.Enums;
 
-namespace DAM.DAM.Api.DTOs.Permission
+namespace DAM.DAM.Api.DTOs.Requests.Permission
 {
     public class PermissionGrantRequest
     {
