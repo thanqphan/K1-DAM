@@ -1,0 +1,127 @@
+﻿using AutoMapper;
+using Azure.Core;
+using DAM.DAM.Api.DTOs.File;
+using DAM.DAM.Api.DTOs.Folder;
+using DAM.DAM.Api.DTOs.Permission;
+using DAM.DAM.BLL.Interfaces;
+using DAM.DAM.DAL.Entities;
+using DAM.DAM.DAL.Enums;
+using DAM.DAM.DAL.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using static DAM.DAM.BLL.Extensions.PagingExtension;
+using File = DAM.DAM.DAL.Entities.File;
+
+namespace DAM.DAM.BLL.Services
+{
+    public class FolderService : IFolderService
+    {
+        private readonly IBaseRepository<Folder> _foldersRepository;
+        private readonly IBaseRepository<File> _filesRepository;
+        private readonly IPermissionService _permissionService;
+        private readonly IMapper _mapper;
+
+        public FolderService(IBaseRepository<Folder> folderRepository, IPermissionService permissionService, IMapper mapper
+            , IBaseRepository<File> fileRepository)
+        {
+            _foldersRepository = folderRepository;
+            _permissionService = permissionService;
+            _mapper = mapper;
+            _filesRepository = fileRepository;
+        }
+
+        public async Task<FolderResponse> AddFolderAsync(FolderRequest request)
+        {
+            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            {
+                UserId = request.UserId,
+                EntityId = request.ParentFolderId ?? request.DriveId,
+                Role = PermissionRoleEnum.Contributor
+            }))
+            {
+                throw new UnauthorizedAccessException("You do not have permission to add folders.");
+            }
+
+            var folder = _mapper.Map<Folder>(request);
+            await _foldersRepository.AddAsync(folder);
+
+            return _mapper.Map<FolderResponse>(folder);
+        }
+
+        public async Task<FolderResponse> UpdateFolderAsync(FolderRequest request)
+        {
+            var existingFolder = await _foldersRepository.GetByIdAsync(request.Id)
+                ?? throw new KeyNotFoundException("Folder not found.");
+
+            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            {
+                UserId = request.UserId,
+                EntityId = existingFolder.Id,
+                Role = PermissionRoleEnum.Contributor
+            }))
+            {
+                throw new UnauthorizedAccessException("You do not have permission to update this folder.");
+            }
+
+            _mapper.Map(request, existingFolder);
+            await _foldersRepository.UpdateAsync(existingFolder);
+
+            return _mapper.Map<FolderResponse>(existingFolder);
+        }
+
+        public async Task DeleteFolderAsync(FolderDeleteRequest request)
+        {
+            var folder = await _foldersRepository.GetByIdAsync(request.FolderId)
+                ?? throw new KeyNotFoundException("Folder not found.");
+
+            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            {
+                UserId = request.UserId,
+                EntityId = folder.Id,
+                Role = PermissionRoleEnum.Contributor
+            }))
+            {
+                throw new UnauthorizedAccessException("You do not have permission to delete this folder.");
+            }
+
+            await _foldersRepository.DeleteAsync(folder);
+        }
+
+        public async Task<FolderDetailsResponse> GetFolderByIdAsync(string id)
+        {
+            var folder = await _foldersRepository.GetByIdAsync(id);
+
+            if (folder == null)
+            {
+                throw new KeyNotFoundException("Folder not found.");
+            }
+
+            var folderResponse = _mapper.Map<FolderDetailsResponse>(folder);
+
+            folderResponse.SubFolders = _mapper.Map<List<FolderResponse>>(
+                await _foldersRepository.GetAllAsync(f => f.ParentId == id));
+
+            folderResponse.Files = _mapper.Map<List<FileResponse>>(
+                await _filesRepository.GetAllAsync(f => f.FolderId == id));
+
+            return folderResponse;
+        }
+
+        public async Task<PagedResult<FolderResponse>> GetAllFoldersAsync(FolderGetAllRequest request)
+        {
+            var folders = await _foldersRepository.GetAllAsync(f => EF.Functions.Like(f.Name, $"%{request.SearchQuery}%"));
+
+            var pagedResult = await folders.ToPagedResult(request.PageIndex, request.PageSize);
+
+            var mappedItems = _mapper.Map<List<FolderResponse>>(pagedResult.Items);
+
+            return new PagedResult<FolderResponse>
+            {
+                Items = mappedItems,
+                Total = pagedResult.Total,
+                PageSize = pagedResult.PageSize,
+                Skipped = pagedResult.Skipped,
+            };
+        }
+
+    }
+}
