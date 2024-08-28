@@ -3,11 +3,6 @@ using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.DAL.Entities;
 using DAM.DAM.DAL.Enums;
 using DAM.DAM.DAL.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Data;
-using System.Reflection.Metadata.Ecma335;
-using System.Security;
 using File = DAM.DAM.DAL.Entities.File;
 
 namespace DAM.DAM.BLL.Services
@@ -28,31 +23,24 @@ namespace DAM.DAM.BLL.Services
         }
         public async Task GrantPermissionAsync(PermissionGrantRequest request)
         {
-            var enityAsFolder = await _foldersRepository.GetByIdAsync(request.EntityId);
-            var entity = (object)enityAsFolder ?? await _filesRepository.GetByIdAsync(request.EntityId);
+            var entity = (object)(await _foldersRepository.GetByIdAsync(request.EntityId))
+                 ?? await _filesRepository.GetByIdAsync(request.EntityId);
             if (entity == null)
             {
                 throw new ArgumentException("Entity not found.");
             }
 
-            string parentId;
-            if (entity is Folder folderEntity)
+            string parentId = entity switch
             {
-                parentId = folderEntity.ParentId;
-            }
-            else if (entity is File fileEntity)
-            {
-                parentId = fileEntity.FolderId;
-            }
-            else
-            {
-                throw new InvalidOperationException("Unknown entity type.");
-            }
+                Folder folderEntity => folderEntity.ParentId,
+                File fileEntity => fileEntity.FolderId,
+                _ => throw new InvalidOperationException("Unknown entity type."),
+            };
 
             var hasAdminPermission = await HasPermissionAsync(new PermissionRequest
             {
                 UserId = request.GrantingUserId,
-                EntityId = request.EntityId,
+                EntityId = parentId,
                 Role = PermissionRoleEnum.Admin,
             });
 
@@ -61,7 +49,6 @@ namespace DAM.DAM.BLL.Services
                 throw new UnauthorizedAccessException("You must have Admin role to share permissions.");
             }
 
-            // Kiểm tra nếu người dùng đã có quyền với vai trò cụ thể
             var hasPermission = await HasPermissionAsync(new PermissionRequest
             {
                 UserId = request.TargetUserId,
@@ -74,19 +61,16 @@ namespace DAM.DAM.BLL.Services
                 throw new InvalidOperationException("This user already has the same permission for this entity.");
             }
 
-            // Tìm kiếm quyền hiện có nếu vai trò khác
             var existingPermission = (await _permissionsRepository.GetAllAsync())
                 .FirstOrDefault(p => p.UserId == request.TargetUserId && p.EntityId == request.EntityId);
 
             if (existingPermission != null)
             {
-                // Cập nhật quyền nếu vai trò khác
                 existingPermission.Role = request.Role;
                 await _permissionsRepository.UpdateAsync(existingPermission);
             }
             else
             {
-                // Tạo quyền mới nếu chưa tồn tại
                 var permission = new Permission
                 {
                     Id = Guid.NewGuid().ToString(),

@@ -35,9 +35,9 @@ namespace DAM.DAM.Api.Controller
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFile([FromQuery] FolderDeleteRequest request)
+        public async Task<IActionResult> DeleteFile([FromRoute] string id, [FromQuery] string userId)
         {
-            await _fileService.DeleteFileAsync(request);
+            await _fileService.DeleteFileAsync(id, userId);
 
             return NoContent();
         }
@@ -47,8 +47,8 @@ namespace DAM.DAM.Api.Controller
         {
             try
             {
-                var folderDto = await _fileService.GetFileByIdAsync(id);
-                return Ok(folderDto);
+                var response = await _fileService.GetFileByIdAsync(id);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {

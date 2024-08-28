@@ -3,7 +3,6 @@ using DAM.DAM.Api.DTOs.Requests.File;
 using DAM.DAM.Api.DTOs.Requests.Folder;
 using DAM.DAM.Api.DTOs.Requests.Permission;
 using DAM.DAM.Api.DTOs.Responses.File;
-using DAM.DAM.Api.DTOs.Responses.Folder;
 using DAM.DAM.BLL.Interfaces;
 using DAM.DAM.DAL.Enums;
 using DAM.DAM.DAL.Interfaces;
@@ -28,15 +27,13 @@ namespace DAM.DAM.BLL.Services
 
         public async Task<FileResponse> AddFileAsync(FileRequest request)
         {
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            if (!string.IsNullOrEmpty(request.FolderId) && !string.IsNullOrEmpty(request.DriveId))
             {
-                UserId = request.UserId,
-                EntityId = request.FolderId ?? request.DriveId,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to add files.");
+                throw new ArgumentException("Only one of ParentFolderId or DriveId should be provided, not both.");
             }
+
+            await CheckPermissionAsync(request.UserId, request.Id,
+                PermissionRoleEnum.Contributor, "You do not have permission to add folders.");
 
             var file = _mapper.Map<File>(request);
             await _filesRepository.AddAsync(file);
@@ -46,18 +43,16 @@ namespace DAM.DAM.BLL.Services
 
         public async Task<FileResponse> UpdateFileAsync(FileRequest request)
         {
+            if (!string.IsNullOrEmpty(request.FolderId) && !string.IsNullOrEmpty(request.DriveId))
+            {
+                throw new ArgumentException("Only one of ParentFolderId or DriveId should be provided, not both.");
+            }
+
             var existingFile = await _filesRepository.GetByIdAsync(request.Id)
                 ?? throw new KeyNotFoundException("File not found.");
 
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
-            {
-                UserId = request.UserId,
-                EntityId = existingFile.Id,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to update this file.");
-            }
+            await CheckPermissionAsync(request.UserId, request.Id,
+                PermissionRoleEnum.Contributor, "You do not have permission to update folders.");
 
             _mapper.Map(request, existingFile);
             await _filesRepository.UpdateAsync(existingFile);
@@ -65,20 +60,13 @@ namespace DAM.DAM.BLL.Services
             return _mapper.Map<FileResponse>(existingFile);
         }
 
-        public async Task DeleteFileAsync(FolderDeleteRequest request)
+        public async Task DeleteFileAsync(string id, string userId)
         {
-            var file = await _filesRepository.GetByIdAsync(request.Id)
+            var file = await _filesRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("File not found.");
 
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
-            {
-                UserId = request.UserId,
-                EntityId = file.Id,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to delete this file.");
-            }
+            await CheckPermissionAsync(userId, id,
+                PermissionRoleEnum.Contributor, "You do not have permission to delete folders.");
 
             await _filesRepository.DeleteAsync(file);
         }
@@ -97,9 +85,9 @@ namespace DAM.DAM.BLL.Services
 
         public async Task<PagedResult<FileResponse>> GetAllFilesAsync(FolderGetAllRequest request)
         {
-            var folders = await _filesRepository.GetAllAsync(f => EF.Functions.Like(f.Name, $"%{request.SearchQuery}%"));
+            var files = await _filesRepository.GetAllAsync(f => EF.Functions.Like(f.Name, $"%{request.SearchQuery}%"));
 
-            var pagedResult = await folders.ToPagedResult(request.PageIndex, request.PageSize);
+            var pagedResult = await files.ToPagedResult(request.PageIndex, request.PageSize);
 
             var mappedItems = _mapper.Map<List<FileResponse>>(pagedResult.Items);
 
@@ -110,6 +98,19 @@ namespace DAM.DAM.BLL.Services
                 PageSize = pagedResult.PageSize,
                 Skipped = pagedResult.Skipped,
             };
+        }
+
+        private async Task CheckPermissionAsync(string userId, string entityId, PermissionRoleEnum requiredRole, string errorMessage)
+        {
+            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            {
+                UserId = userId,
+                EntityId = entityId,
+                Role = requiredRole
+            }))
+            {
+                throw new UnauthorizedAccessException(errorMessage);
+            }
         }
     }
 }

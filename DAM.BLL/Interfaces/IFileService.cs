@@ -9,7 +9,7 @@ namespace DAM.DAM.BLL.Interfaces
     {
         Task<FileResponse> AddFileAsync(FileRequest request);
         Task<FileResponse> UpdateFileAsync(FileRequest request);
-        Task DeleteFileAsync(FolderDeleteRequest request);
+        Task DeleteFileAsync(string id, string userId);
         Task<FileResponse> GetFileByIdAsync(string id);
         Task<PagedResult<FileResponse>> GetAllFilesAsync(FolderGetAllRequest request);
     }

@@ -31,15 +31,13 @@ namespace DAM.DAM.BLL.Services
 
         public async Task<FolderResponse> AddFolderAsync(FolderRequest request)
         {
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            if (!string.IsNullOrEmpty(request.ParentId) && !string.IsNullOrEmpty(request.DriveId))
             {
-                UserId = request.UserId,
-                EntityId = request.ParentFolderId ?? request.DriveId,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to add folders.");
+                throw new ArgumentException("Only one of ParentFolderId or DriveId should be provided, not both.");
             }
+
+            await CheckPermissionAsync(request.UserId, request.ParentId ?? request.DriveId, 
+                PermissionRoleEnum.Contributor, "You do not have permission to add folders.");
 
             var folder = _mapper.Map<Folder>(request);
             await _foldersRepository.AddAsync(folder);
@@ -49,18 +47,16 @@ namespace DAM.DAM.BLL.Services
 
         public async Task<FolderResponse> UpdateFolderAsync(FolderRequest request)
         {
+            if (!string.IsNullOrEmpty(request.ParentId) && !string.IsNullOrEmpty(request.DriveId))
+            {
+                throw new ArgumentException("Only one of ParentFolderId or DriveId should be provided, not both.");
+            }
+
             var existingFolder = await _foldersRepository.GetByIdAsync(request.Id)
                 ?? throw new KeyNotFoundException("Folder not found.");
 
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
-            {
-                UserId = request.UserId,
-                EntityId = existingFolder.Id,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to update this folder.");
-            }
+            await CheckPermissionAsync(request.UserId, request.Id, 
+                PermissionRoleEnum.Contributor, "You do not have permission to update folders.");
 
             _mapper.Map(request, existingFolder);
             await _foldersRepository.UpdateAsync(existingFolder);
@@ -68,20 +64,13 @@ namespace DAM.DAM.BLL.Services
             return _mapper.Map<FolderResponse>(existingFolder);
         }
 
-        public async Task DeleteFolderAsync(FolderDeleteRequest request)
+        public async Task DeleteFolderAsync(string id, string userId)
         {
-            var folder = await _foldersRepository.GetByIdAsync(request.Id)
+            var folder = await _foldersRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException("Folder not found.");
 
-            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
-            {
-                UserId = request.UserId,
-                EntityId = folder.Id,
-                Role = PermissionRoleEnum.Contributor
-            }))
-            {
-                throw new UnauthorizedAccessException("You do not have permission to delete this folder.");
-            }
+            await CheckPermissionAsync(userId, id,
+                PermissionRoleEnum.Contributor, "You do not have permission to delete folders.");
 
             await _foldersRepository.DeleteAsync(folder);
         }
@@ -121,6 +110,19 @@ namespace DAM.DAM.BLL.Services
                 PageSize = pagedResult.PageSize,
                 Skipped = pagedResult.Skipped,
             };
+        }
+
+        private async Task CheckPermissionAsync(string userId, string entityId, PermissionRoleEnum requiredRole, string errorMessage)
+        {
+            if (!await _permissionService.HasPermissionAsync(new PermissionRequest
+            {
+                UserId = userId,
+                EntityId = entityId,
+                Role = requiredRole
+            }))
+            {
+                throw new UnauthorizedAccessException(errorMessage);
+            }
         }
 
     }

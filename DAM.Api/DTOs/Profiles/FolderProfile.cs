@@ -14,8 +14,8 @@ namespace DAM.DAM.Api.DTOs.Profiles
                     srcMember != null && !(srcMember is string str && string.IsNullOrEmpty(str))));
 
             CreateMap<Folder, FolderResponse>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) =>
-                    srcMember != null && !(srcMember is string str && string.IsNullOrEmpty(str))));
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) =>
+                    srcMember != null || !string.IsNullOrEmpty(destMember?.ToString())));
 
             CreateMap<Folder, FolderDetailsResponse>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) =>

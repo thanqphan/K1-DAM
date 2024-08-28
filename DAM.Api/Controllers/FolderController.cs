@@ -33,9 +33,9 @@ namespace DAM.DAM.Api.Controller
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFolder([FromQuery] FolderDeleteRequest request)
+        public async Task<IActionResult> DeleteFolder([FromRoute]string id, [FromQuery] string userId)
         {
-            await _folderService.DeleteFolderAsync(request);
+            await _folderService.DeleteFolderAsync(id,userId);
 
             return NoContent();
         }
@@ -45,8 +45,8 @@ namespace DAM.DAM.Api.Controller
         {
             try
             {
-                var folderDto = await _folderService.GetFolderByIdAsync(id);
-                return Ok(folderDto);
+                var response = await _folderService.GetFolderByIdAsync(id);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {
@@ -57,8 +57,8 @@ namespace DAM.DAM.Api.Controller
         [HttpGet]
         public async Task<IActionResult> GetAllFolders([FromQuery] FolderGetAllRequest request)
         {
-            var folders = await _folderService.GetAllFoldersAsync(request);
-            return Ok(folders);
+            var responses = await _folderService.GetAllFoldersAsync(request);
+            return Ok(responses);
         }
     }
 }
