@@ -49,18 +49,22 @@ namespace DAM
             var spec1Pdf = new File { Id = Guid.NewGuid().ToString(), Name = "Spec1.pdf", FolderId = specifications.Id, Type = FileTypeEnum.PDF };
             var spec2Pdf = new File { Id = Guid.NewGuid().ToString(), Name = "Spec2.pdf", FolderId = specifications.Id, Type = FileTypeEnum.PDF };
 
+            // Permissions - Adjusted for Scenario 2
             var permission1 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user1.Id, EntityId = root1.Id, Role = PermissionRoleEnum.Admin };
             var permission2 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user2.Id, EntityId = subFolder1.Id, Role = PermissionRoleEnum.Contributor };
             var permission3 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user3.Id, EntityId = subSubFolder1.Id, Role = PermissionRoleEnum.Reader };
             var permission4 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user1.Id, EntityId = projectFiles.Id, Role = PermissionRoleEnum.Admin };
             var permission5 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user2.Id, EntityId = specifications.Id, Role = PermissionRoleEnum.Contributor };
+            // New permissions added for files within Specifications
+            var permission7 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user2.Id, EntityId = spec1Pdf.Id, Role = PermissionRoleEnum.Contributor };
+            var permission8 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user2.Id, EntityId = spec2Pdf.Id, Role = PermissionRoleEnum.Contributor };
             var permission6 = new Permission { Id = Guid.NewGuid().ToString(), UserId = user3.Id, EntityId = file3.Id, Role = PermissionRoleEnum.Reader };
 
             context.Users.AddRange(user1, user2, user3);
             context.Drives.AddRange(driveA, driveB, driveC, driveD);
             context.Folders.AddRange(root1, root2, subFolder1, subFolder2, subSubFolder1, projectFiles, specifications, documents, images, publicFolder, archives);
             context.Files.AddRange(file1, file2, file3, designPdf, planDocx, spec1Pdf, spec2Pdf);
-            context.Permissions.AddRange(permission1, permission2, permission3, permission4, permission5, permission6);
+            context.Permissions.AddRange(permission1, permission2, permission3, permission4, permission5, permission6, permission7, permission8);
 
             context.SaveChanges();
         }

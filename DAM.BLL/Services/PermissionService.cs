@@ -49,18 +49,11 @@ namespace DAM.DAM.BLL.Services
                 throw new UnauthorizedAccessException("You must have Admin role to share permissions.");
             }
 
-            var hasPermission = await HasPermissionAsync(new PermissionRequest
-            {
-                UserId = request.TargetUserId,
-                EntityId = request.EntityId,
-                Role = request.Role
-            });
+            await GrantPermissionRecursivelyAsync(request);
+        }
 
-            if (hasPermission)
-            {
-                throw new InvalidOperationException("This user already has the same permission for this entity.");
-            }
-
+        private async Task GrantPermissionRecursivelyAsync(PermissionGrantRequest request)
+        {
             var existingPermission = (await _permissionsRepository.GetAllAsync())
                 .FirstOrDefault(p => p.UserId == request.TargetUserId && p.EntityId == request.EntityId);
 
@@ -80,7 +73,37 @@ namespace DAM.DAM.BLL.Services
                 };
                 await _permissionsRepository.AddAsync(permission);
             }
+
+            var folder = await _foldersRepository.GetByIdAsync(request.EntityId);
+            if (folder != null)
+            {
+                var subFolders = (await _foldersRepository.GetAllAsync()).Where(f => f.ParentId == request.EntityId);
+                var files = (await _filesRepository.GetAllAsync()).Where(f => f.FolderId == request.EntityId);
+
+                foreach (var subFolder in subFolders)
+                {
+                    await GrantPermissionRecursivelyAsync(new PermissionGrantRequest
+                    {
+                        EntityId = subFolder.Id,
+                        TargetUserId = request.TargetUserId,
+                        GrantingUserId = request.GrantingUserId,
+                        Role = request.Role
+                    });
+                }
+
+                foreach (var file in files)
+                {
+                    await GrantPermissionRecursivelyAsync(new PermissionGrantRequest
+                    {
+                        EntityId = file.Id,
+                        TargetUserId = request.TargetUserId,
+                        GrantingUserId = request.GrantingUserId,
+                        Role = request.Role
+                    });
+                }
+            }
         }
+
 
         public async Task<bool> HasPermissionAsync(PermissionRequest request)
         {
