@@ -15,9 +15,7 @@ namespace DAM.DAM.Api.DTOs.Profiles
                     srcMember != null && !(srcMember is string str && string.IsNullOrEmpty(str))));
 
             CreateMap<File, FileResponse>()
-                     .ForMember(dest => dest.Type, opts => opts.MapFrom(src => src.Type.ToString()))
-
-
+                .ForMember(dest => dest.Type, opts => opts.MapFrom(src => src.Type.ToString()))
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) =>
                     srcMember != null || !string.IsNullOrEmpty(destMember?.ToString())));
         }
