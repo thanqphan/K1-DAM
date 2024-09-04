@@ -52,7 +52,7 @@ namespace DAM.DAM.BLL.Services
                 ?? throw new KeyNotFoundException("File not found.");
 
             await CheckPermissionAsync(request.UserId, request.Id,
-                PermissionRoleEnum.Contributor, "You do not have permission to update folders.");
+                PermissionRoleEnum.Contributor, "You do not have permission to update files.");
 
             _mapper.Map(request, existingFile);
             await _filesRepository.UpdateAsync(existingFile);
@@ -66,7 +66,7 @@ namespace DAM.DAM.BLL.Services
                 ?? throw new KeyNotFoundException("File not found.");
 
             await CheckPermissionAsync(userId, id,
-                PermissionRoleEnum.Contributor, "You do not have permission to delete folders.");
+                PermissionRoleEnum.Contributor, "You do not have permission to delete files.");
 
             await _filesRepository.DeleteAsync(file);
         }
