@@ -73,7 +73,7 @@ Follow these steps to set up the project locally using PowerShell within Visual 
 
    Use the following command to clone the repository:
    ```powershell
-   git clone https://github.com/your-username/dam-system.git
+   git clone https://github.com/thanqphan/K1-DAM.git
    ```
    Navigate into the project directory:
    ```
